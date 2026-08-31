@@ -2,7 +2,7 @@
 
 I am a software engineer and Computer Science student at Ball State University, based in Muncie, Indiana. 
 
-By day, I am a Mobile and Desktop Applications Software Engineer at [**Sweetwater**](https://share.google/Mn3tGTuYOzzNJw267). I work primarily with **Swift** and **Kotlin** (and occasionally Objective-C) to build retail mobile applications and mobile or desktop internal tools that power the business.
+By day, I am a Mobile and Desktop Applications Software Engineer. I work primarily with **Swift** and **Kotlin** (and occasionally Objective-C) to build retail mobile applications and mobile or desktop internal tools that power the business.
 
 When I’m not in a text editor, I am likely tinkering with hardware. I enjoy taking tech and giving it a second life through repair and modding. This hands-on curiosity feeds into my interest in cybersecurity; I am constantly exploring offensive security research to understand vulnerabilities from the inside out.
 
