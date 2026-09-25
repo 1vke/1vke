@@ -9,25 +9,29 @@ three star layers of increasing size that drift at different speeds
 Why SVG? GitHub strips <script> and most CSS from READMEs, but SVG
 animations (SMIL) still run when the SVG is displayed as an image.
 
-Size trick: instead of one fade animation per star, stars are split into
-a few "twinkle groups" that share a single <animate> each (random
-membership + random phase/duration per group keeps it looking organic).
-Each layer is emitted twice — offset by one field-height — so the
-vertical drift loops seamlessly, just like the site's 200dvh duplicate.
+Size trick #1: each layer is a <pattern> tile, so the seamless drift loop
+is free — the pattern tiles infinitely and no star markup is duplicated.
+Size trick #2: stars fade in "twinkle groups" sharing one <animate> each
+(random membership + random phase/duration keeps it looking organic).
+
+Trade-off: the tile is half the banner wide, so the left and right halves
+repeat. Also, SMIL inside <pattern> content is not animated consistently
+across browsers (Safari is the risky one) — see git history for the
+non-pattern fallback if this ever breaks.
 """
 
 W, H = 880, 260          # banner viewport
-FIELD = 2 * H            # star field spans 2x the viewport
+TW, TH = 440, 520        # pattern tile: half banner wide, field-height tall
 SEED = 42069             # same seed as the website, lol
 TITLE = "Hello, I'm Lucas 👋"
 
-# (star count, drift duration in seconds)
-# Mirrors the website's layers: 700/50s, 200/100s, 100/150s,
-# scaled down since this is a banner, not a full viewport.
+# (star count per tile, drift duration in seconds)
+# Mirrors the website's layers: 700/50s, 200/100s, 100/150s, scaled down
+# for a banner. Counts are per 440px-wide tile (two tiles cover the width).
 LAYERS = [
-    (90, 50),
-    (40, 100),
-    (15, 150),
+    (45, 50),
+    (20, 100),
+    (8, 150),
 ]
 
 TWINKLE_GROUPS = 6  # fade groups per layer; more = more organic, more markup
@@ -44,7 +48,7 @@ def lcg(seed):
 def make_svg(star_fill, text_fill):
     gen = lcg(SEED)
     rnd = lambda: next(gen)
-    layers = []
+    patterns = []
 
     for count, drift in LAYERS:
         # Split this layer's stars into twinkle groups. Each group gets
@@ -53,7 +57,7 @@ def make_svg(star_fill, text_fill):
         groups = [[] for _ in range(TWINKLE_GROUPS)]
         for _ in range(count):
             groups[int(rnd() * TWINKLE_GROUPS)].append(
-                f'<circle cx="{rnd() * W:.0f}" cy="{rnd() * FIELD:.0f}" r="{0.7 + rnd() * 1.4:.1f}"/>'
+                f'<circle cx="{rnd() * TW:.0f}" cy="{rnd() * TH:.0f}" r="{0.7 + rnd() * 1.4:.1f}"/>'
             )
 
         group_markup = ""
@@ -71,17 +75,25 @@ def make_svg(star_fill, text_fill):
                 + "".join(stars) + '</g>'
             )
 
-        layers.append(
-            f'<g>'
-            f'<animateTransform attributeName="transform" type="translate" '
-            f'from="0 0" to="0 -{FIELD}" dur="{drift}s" repeatCount="indefinite"/>'
-            + group_markup
-            + f'<g transform="translate(0 {FIELD})">' + group_markup + '</g>'
-            f'</g>'
-        )
+        patterns.append(group_markup)
+
+    defs = "".join(
+        f'<pattern id="p{i}" width="{TW}" height="{TH}" patternUnits="userSpaceOnUse">' + p + '</pattern>'
+        for i, p in enumerate(patterns)
+    )
+
+    # One rect per layer, painted with that layer's pattern. The rect is
+    # tall enough that translating it up by one tile-height (the pattern
+    # period) loops seamlessly while always covering the viewport.
+    rects = "".join(
+        f'<rect x="0" y="-{TH}" width="{W}" height="{3 * TH}" fill="url(#p{i})">'
+        f'<animateTransform attributeName="transform" type="translate" from="0 0" to="0 -{TH}" '
+        f'dur="{LAYERS[i][1]}s" repeatCount="indefinite"/></rect>'
+        for i in range(len(LAYERS))
+    )
 
     # The heading rides on top of the star field. It sits outside the
-    # drifting <g> layers, so the stars move (and twinkle) behind it.
+    # drifting layers, so the stars move (and twinkle) behind it.
     heading = (
         f'<text x="{W / 2}" y="{H / 2}" text-anchor="middle" dominant-baseline="middle" '
         f'font-family="-apple-system, BlinkMacSystemFont, \'Segoe UI\', Helvetica, Arial, sans-serif" '
@@ -91,8 +103,7 @@ def make_svg(star_fill, text_fill):
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" '
         f'viewBox="0 0 {W} {H}" role="img" aria-label="{TITLE} — stars fading in and out">\n'
-        + "\n".join(layers) + "\n"
-        + heading + "\n</svg>\n"
+        f'<defs>{defs}</defs>\n{rects}\n{heading}\n</svg>\n'
     )
 
 
