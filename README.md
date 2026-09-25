@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/1vke/1vke/main/stars-dark.svg">
+    <img src="https://raw.githubusercontent.com/1vke/1vke/main/stars-light.svg" alt="Stars drifting and fading in and out">
+  </picture>
+</p>
+
 ## Hello, I'm Lucas 👋
 
 I am a software engineer and Computer Science student at Ball State University, based in Muncie, Indiana. 
